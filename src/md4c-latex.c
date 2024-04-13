@@ -272,26 +272,12 @@ render_open_ol_block(MD_HTML* r, const MD_BLOCK_OL_DETAIL* det)
     char buf[64];
 
     if(det->start == 1) {
-        RENDER_VERBATIM(r, "<ol>\n");
+        RENDER_VERBATIM(r, "\\begin{enumerate}\n");
         return;
     }
 
     snprintf(buf, sizeof(buf), "<ol start=\"%u\">\n", det->start);
     RENDER_VERBATIM(r, buf);
-}
-
-static void
-render_open_li_block(MD_HTML* r, const MD_BLOCK_LI_DETAIL* det)
-{
-    if(det->is_task) {
-        RENDER_VERBATIM(r, "<li class=\"task-list-item\">"
-                          "<input type=\"checkbox\" class=\"task-list-item-checkbox\" disabled");
-        if(det->task_mark == 'x' || det->task_mark == 'X')
-            RENDER_VERBATIM(r, " checked");
-        RENDER_VERBATIM(r, ">");
-    } else {
-        RENDER_VERBATIM(r, "<li>");
-    }
 }
 
 static void
@@ -380,14 +366,15 @@ enter_block_callback(MD_BLOCKTYPE type, void* detail, void* userdata)
     switch(type) {
         case MD_BLOCK_DOC:      /* noop */ break;
         case MD_BLOCK_QUOTE:    RENDER_VERBATIM(r, "<blockquote>\n"); break;
-        case MD_BLOCK_UL:       RENDER_VERBATIM(r, "<ul>\n"); break;
+        case MD_BLOCK_UL:       RENDER_VERBATIM(r, "\\begin{itemize} \n"); break;
         case MD_BLOCK_OL:       render_open_ol_block(r, (const MD_BLOCK_OL_DETAIL*)detail); break;
-        case MD_BLOCK_LI:       render_open_li_block(r, (const MD_BLOCK_LI_DETAIL*)detail); break;
+        case MD_BLOCK_LI:       RENDER_VERBATIM(r, "\\item "); break;
         case MD_BLOCK_HR:       RENDER_VERBATIM(r, (r->flags & MD_HTML_FLAG_XHTML) ? "<hr />\n" : "<hr>\n"); break;
         case MD_BLOCK_H:        RENDER_VERBATIM(r, head[((MD_BLOCK_H_DETAIL*)detail)->level - 1]); break;
         case MD_BLOCK_CODE:     render_open_code_block(r, (const MD_BLOCK_CODE_DETAIL*) detail); break;
         case MD_BLOCK_HTML:     /* noop */ break;
-        case MD_BLOCK_P:        RENDER_VERBATIM(r, "<p>"); break;
+        // begining of paragraph
+        case MD_BLOCK_P:        RENDER_VERBATIM(r, "\\par "); break;
         case MD_BLOCK_TABLE:    RENDER_VERBATIM(r, "<table>\n"); break;
         case MD_BLOCK_THEAD:    RENDER_VERBATIM(r, "<thead>\n"); break;
         case MD_BLOCK_TBODY:    RENDER_VERBATIM(r, "<tbody>\n"); break;
@@ -408,14 +395,18 @@ leave_block_callback(MD_BLOCKTYPE type, void* detail, void* userdata)
     switch(type) {
         case MD_BLOCK_DOC:      /*noop*/ break;
         case MD_BLOCK_QUOTE:    RENDER_VERBATIM(r, "</blockquote>\n"); break;
-        case MD_BLOCK_UL:       RENDER_VERBATIM(r, "</ul>\n"); break;
-        case MD_BLOCK_OL:       RENDER_VERBATIM(r, "</ol>\n"); break;
-        case MD_BLOCK_LI:       RENDER_VERBATIM(r, "</li>\n"); break;
+        // end of unordered list
+        case MD_BLOCK_UL:       RENDER_VERBATIM(r, "\\end{itemize}\n"); break;
+        // end of ordered list
+        case MD_BLOCK_OL:       RENDER_VERBATIM(r, "\\end{enumerate}\n"); break;
+        // end of list item
+        case MD_BLOCK_LI:       RENDER_VERBATIM(r, " \n"); break;
         case MD_BLOCK_HR:       /*noop*/ break;
         case MD_BLOCK_H:        RENDER_VERBATIM(r, head[((MD_BLOCK_H_DETAIL*)detail)->level - 1]); break;
         case MD_BLOCK_CODE:     RENDER_VERBATIM(r, "</code></pre>\n"); break;
         case MD_BLOCK_HTML:     /* noop */ break;
-        case MD_BLOCK_P:        RENDER_VERBATIM(r, "</p>\n"); break;
+        // end of paragraph
+        case MD_BLOCK_P:        RENDER_VERBATIM(r, " \n"); break;
         case MD_BLOCK_TABLE:    RENDER_VERBATIM(r, "</table>\n"); break;
         case MD_BLOCK_THEAD:    RENDER_VERBATIM(r, "</thead>\n"); break;
         case MD_BLOCK_TBODY:    RENDER_VERBATIM(r, "</tbody>\n"); break;
@@ -453,9 +444,10 @@ enter_span_callback(MD_SPANTYPE type, void* detail, void* userdata)
         return 0;
 
     switch(type) {
-        case MD_SPAN_EM:                RENDER_VERBATIM(r, "<em>"); break;
-        case MD_SPAN_STRONG:            RENDER_VERBATIM(r, "<strong>"); break;
-        case MD_SPAN_U:                 RENDER_VERBATIM(r, "<u>"); break;
+        case MD_SPAN_EM:                RENDER_VERBATIM(r, "{\\it "); break;
+        case MD_SPAN_STRONG:            RENDER_VERBATIM(r, "{\\bf "); break;
+        // begin of underline
+        case MD_SPAN_U:                 RENDER_VERBATIM(r, "\\underline{"); break;
         case MD_SPAN_A:                 render_open_a_span(r, (MD_SPAN_A_DETAIL*) detail); break;
         case MD_SPAN_IMG:               render_open_img_span(r, (MD_SPAN_IMG_DETAIL*) detail); break;
         case MD_SPAN_CODE:              RENDER_VERBATIM(r, "<code>"); break;
@@ -479,9 +471,10 @@ leave_span_callback(MD_SPANTYPE type, void* detail, void* userdata)
         return 0;
 
     switch(type) {
-        case MD_SPAN_EM:                RENDER_VERBATIM(r, "</em>"); break;
-        case MD_SPAN_STRONG:            RENDER_VERBATIM(r, "</strong>"); break;
-        case MD_SPAN_U:                 RENDER_VERBATIM(r, "</u>"); break;
+        case MD_SPAN_EM:                RENDER_VERBATIM(r, "}"); break;
+        case MD_SPAN_STRONG:            RENDER_VERBATIM(r, "}"); break;
+        // End of underline
+        case MD_SPAN_U:                 RENDER_VERBATIM(r, "}"); break;
         case MD_SPAN_A:                 RENDER_VERBATIM(r, "</a>"); break;
         case MD_SPAN_IMG:               render_close_img_span(r, (MD_SPAN_IMG_DETAIL*) detail); break;
         case MD_SPAN_CODE:              RENDER_VERBATIM(r, "</code>"); break;
@@ -507,8 +500,8 @@ text_callback(MD_TEXTTYPE type, const MD_CHAR* text, MD_SIZE size, void* userdat
                                 break;
         case MD_TEXT_SOFTBR:    RENDER_VERBATIM(r, (r->image_nesting_level == 0 ? "\n" : " ")); break;
         case MD_TEXT_HTML:      render_verbatim(r, text, size); break;
-        case MD_TEXT_ENTITY:    render_entity(r, text, size, render_html_escaped); break;
-        default:                render_html_escaped(r, text, size); break;
+        case MD_TEXT_ENTITY:    render_verbatim(r, text, size); break;
+        default:                render_verbatim(r, text, size); break;
     }
 
     return 0;
@@ -523,7 +516,7 @@ debug_log_callback(const char* msg, void* userdata)
 }
 
 int
-md_html(const MD_CHAR* input, MD_SIZE input_size,
+md_latex(const MD_CHAR* input, MD_SIZE input_size,
         void (*process_output)(const MD_CHAR*, MD_SIZE, void*),
         void* userdata, unsigned parser_flags, unsigned renderer_flags)
 {

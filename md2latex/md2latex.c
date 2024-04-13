@@ -28,7 +28,7 @@
 #include <string.h>
 #include <time.h>
 
-#include "md4c-html.h"
+#include "md4c-latex.h"
 #include "cmdline.h"
 
 
@@ -40,8 +40,7 @@ static unsigned parser_flags = 0;
 #else
     static unsigned renderer_flags = MD_HTML_FLAG_DEBUG;
 #endif
-static int want_fullhtml = 0;
-static int want_xhtml = 0;
+static int want_full_latex = 0;
 static int want_stat = 0;
 static int want_replay_fuzz = 0;
 
@@ -170,7 +169,7 @@ process_file(const char* in_path, FILE* in, FILE* out)
      * md_renderer_t structure. */
     t0 = clock();
 
-    ret = md_html(buf_in.data, (MD_SIZE)buf_in.size, process_output,
+    ret = md_latex(buf_in.data, (MD_SIZE)buf_in.size, process_output,
                 (void*) &buf_out, p_flags, r_flags);
 
     t1 = clock();
@@ -180,34 +179,15 @@ process_file(const char* in_path, FILE* in, FILE* out)
     }
 
     /* Write down the document in the HTML format. */
-    if(want_fullhtml) {
-        if(want_xhtml) {
-            fprintf(out, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-            fprintf(out, "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" "
-                            "\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n");
-            fprintf(out, "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n");
-        } else {
-            fprintf(out, "<!DOCTYPE html>\n");
-            fprintf(out, "<html>\n");
-        }
-        fprintf(out, "<head>\n");
-        fprintf(out, "<title>%s</title>\n", html_title ? html_title : "");
-        fprintf(out, "<meta name=\"generator\" content=\"md2html\"%s>\n", want_xhtml ? " /" : "");
-#if !defined MD4C_USE_ASCII && !defined MD4C_USE_UTF16
-        fprintf(out, "<meta charset=\"UTF-8\"%s>\n", want_xhtml ? " /" : "");
-#endif
-        if(css_path != NULL) {
-            fprintf(out, "<link rel=\"stylesheet\" href=\"%s\"%s>\n", css_path, want_xhtml ? " /" : "");
-        }
-        fprintf(out, "</head>\n");
-        fprintf(out, "<body>\n");
+    if(want_full_latex) {
+        fprintf(out, "\\documentclass{article}\n");
+        fprintf(out, "\\begin{document}\n");
     }
 
     fwrite(buf_out.data, 1, buf_out.size, out);
 
-    if(want_fullhtml) {
-        fprintf(out, "</body>\n");
-        fprintf(out, "</html>\n");
+    if(want_full_latex) {
+        fprintf(out, "\\end{document}\n");
     }
 
     if(want_stat) {
@@ -233,8 +213,7 @@ out:
 
 static const CMDLINE_OPTION cmdline_options[] = {
     { 'o', "output",                        'o', CMDLINE_OPTFLAG_REQUIREDARG },
-    { 'f', "full-html",                     'f', 0 },
-    { 'x', "xhtml",                         'x', 0 },
+    { 'f', "full-latex",                     'f', 0 },
     { 's', "stat",                          's', 0 },
     { 'h', "help",                          'h', 0 },
     { 'v', "version",                       'v', 0 },
@@ -280,8 +259,7 @@ usage(void)
         "\n"
         "General options:\n"
         "  -o  --output=FILE    Output file (default is standard output)\n"
-        "  -f, --full-html      Generate full HTML document, including header\n"
-        "  -x, --xhtml          Generate XHTML instead of HTML\n"
+        "  -f, --full-latex     Generate full LaTeX document, including header\n"
         "  -s, --stat           Measure time of input parsing\n"
         "  -h, --help           Display this help and exit\n"
         "  -v, --version        Display version and exit\n"
@@ -357,8 +335,7 @@ cmdline_callback(int opt, char const* value, void* data)
             break;
 
         case 'o':   output_path = value; break;
-        case 'f':   want_fullhtml = 1; break;
-        case 'x':   want_xhtml = 1; renderer_flags |= MD_HTML_FLAG_XHTML; break;
+        case 'f':   want_full_latex = 1; break;
         case 's':   want_stat = 1; break;
         case 'r':   want_replay_fuzz = 1; break;
         case 'h':   usage(); exit(0); break;
