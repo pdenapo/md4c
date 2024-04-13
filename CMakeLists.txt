@@ -13,6 +13,8 @@ set(PROJECT_URL "https://github.com/mity/md4c")
 
 option(BUILD_MD2HTML_EXECUTABLE "Whether to compile the md2html executable" ON)
 
+option(BUILD_MD2LATEX_EXECUTABLE "Whether to compile the md2latex executable" ON)
+
 
 if(WIN32)
     # On Windows, given there is no standard lib install dir etc., we rather
@@ -68,4 +70,8 @@ include(GNUInstallDirs)
 add_subdirectory(src)
 if (BUILD_MD2HTML_EXECUTABLE)
     add_subdirectory(md2html)
+endif ()
+
+if (BUILD_MD2LATEX_EXECUTABLE)
+    add_subdirectory(md2latex)
 endif ()

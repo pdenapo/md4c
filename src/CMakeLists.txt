@@ -25,6 +25,16 @@ set_target_properties(md4c-html PROPERTIES
 )
 target_link_libraries(md4c-html md4c)
 
+# Build rules for LATEX renderer library
+
+configure_file(md4c-latex.pc.in md4c-latex.pc @ONLY)
+add_library(md4c-latex md4c-latex.c md4c-latex.h entity.c entity.h)
+set_target_properties(md4c-latex PROPERTIES
+    VERSION ${MD_VERSION}
+    SOVERSION ${MD_VERSION_MAJOR}
+    PUBLIC_HEADER md4c-html.h
+)
+target_link_libraries(md4c-latex md4c)
 
 # Install rules
 
@@ -47,6 +57,17 @@ install(
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
+install(FILES ${CMAKE_BINARY_DIR}/src/md4c-html.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+
+install(
+    TARGETS md4c-latex
+    EXPORT md4cConfig
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
 install(FILES ${CMAKE_BINARY_DIR}/src/md4c-html.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 
 install(EXPORT md4cConfig DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/md4c/ NAMESPACE md4c::)
